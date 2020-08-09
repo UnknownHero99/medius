@@ -1,0 +1,6 @@
+com\medius\student\controller\RestController.class
+com\medius\student\repository\PlayerRepository.class
+com\medius\student\repository\ProblemRepository.class
+com\medius\student\model\Player.class
+com\medius\student\model\Problem.class
+com\medius\student\repository\ObjectRepository.class
