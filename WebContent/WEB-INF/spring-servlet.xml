@@ -16,15 +16,12 @@
 
 	<beans:bean id="jsonMessageConverter"
 		class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter" />
-	<beans:bean id="xmlMessageConverter"
-		class="org.springframework.http.converter.xml.Jaxb2RootElementHttpMessageConverter" />
 
 	<beans:bean
 		class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
 		<beans:property name="messageConverters">
 			<beans:list>
 				<beans:ref bean="jsonMessageConverter" />
-				<beans:ref bean="xmlMessageConverter" />
 			</beans:list>
 		</beans:property>
 	</beans:bean>

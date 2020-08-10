@@ -5,49 +5,41 @@ import java.util.List;
 
 import com.medius.student.model.Player;
 import com.medius.student.model.Problem;
-import com.medius.student.repository.ProblemRepository;
+import com.medius.student.service.HibernateDatabase;
 import org.json.JSONArray;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.json.JSONObject;
 
-import com.medius.student.repository.PlayerRepository;
 
 @org.springframework.web.bind.annotation.RestController
 public class RestController {
 
-	@Autowired
-	private PlayerRepository playerRepository;
-
-	@Autowired
-	private ProblemRepository problemRepository;
-
 	@GetMapping("players/{username}")
 	public Player getPlayerByUsername(@PathVariable("username") String username) {
-		return playerRepository.retrieve(username);
+		return HibernateDatabase.getPlayer(username);
 	}
 
 	@GetMapping("players")
 	public List<Player> getAllPlayers() {
-		return playerRepository.getAll();
+		return HibernateDatabase.getAllPlayers();
 	}
 
 	@PostMapping("players")
-	public String createPlayer(@RequestBody String Body) {
-		JSONObject json = new JSONObject(Body);
-		Player player = new Player(json.getString("username"), json.getInt("age"));
-		playerRepository.store(player);
-		return json.toString();
+	public Player createPlayer(@RequestBody String Body) {
+			JSONObject json = new JSONObject(Body);
+			Player player = new Player(json.getString("username"), json.getInt("age"));
+			HibernateDatabase.addPlayer(player);
+			return player;
 	}
 
 	@GetMapping("problem/{id}")
 	public Problem getProblemById(@PathVariable("id") long id) {
-		return problemRepository.retrieve(id);
+		return HibernateDatabase.getProblem(id);
 	}
 
 	@GetMapping("problem")
 	public List<Problem> getAllProblems() {
-		return problemRepository.getAll();
+		return HibernateDatabase.getAllProblems();
 	}
 
 	@PostMapping("problem")
@@ -69,8 +61,13 @@ public class RestController {
 			else return null;
 		}
 
-		Problem problem = new Problem(problemList, json.getString("username"));
-		problemRepository.store(problem);
+
+		Player player = HibernateDatabase.getPlayer(json.getString("username"));
+		Problem problem = new Problem(problemList);
+		List<Problem> problems = player.getProblems();
+		problems.add(problem);
+		player.setProblems(problems);
+		HibernateDatabase.createProblem(problem);
 		return problem;
 	}
 }

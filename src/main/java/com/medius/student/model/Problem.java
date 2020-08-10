@@ -11,14 +11,10 @@ public class Problem {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
 
-    private List<List<Boolean>> problem;
+    private Matrix problem;
 
-    @OneToOne(mappedBy = "player")
-    private String username; //foreign key
-
-    public Problem(List<List<Boolean>> problem, String username) {
-        this.problem = problem;
-        this.username = username;
+    public Problem(List<List<Boolean>> problem) {
+        this.problem = new Matrix(problem);
     }
 
     public Long getId() {
@@ -30,19 +26,11 @@ public class Problem {
     }
 
     public List<List<Boolean>> getProblem() {
-        return problem;
+        return problem.getMatrix();
     }
 
     public void setProblem(List<List<Boolean>> problem) {
-        this.problem = problem;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
+        this.problem = new Matrix(problem);
     }
 
 }
