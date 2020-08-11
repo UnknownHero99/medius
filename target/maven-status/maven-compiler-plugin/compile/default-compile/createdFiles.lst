@@ -6,4 +6,5 @@ com\medius\student\model\SolutionStep.class
 com\medius\student\model\Player.class
 com\medius\student\model\Solution.class
 com\medius\student\service\HibernateDatabase.class
+com\medius\student\controller\Solver.class
 com\medius\student\model\View.class

@@ -28,5 +28,7 @@
         <property name="hbm2ddl.auto">create</property>
         <mapping class="com.medius.student.model.Player"/>
         <mapping class="com.medius.student.model.Problem"/>
+        <mapping class="com.medius.student.model.Solution"/>
+        <mapping class="com.medius.student.model.SolutionStep"/>
     </session-factory>
 </hibernate-configuration>
