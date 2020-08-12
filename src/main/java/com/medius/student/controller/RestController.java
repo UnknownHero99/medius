@@ -3,12 +3,11 @@ package com.medius.student.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.medius.student.model.Matrix;
-import com.medius.student.model.Player;
-import com.medius.student.model.Problem;
-import com.medius.student.model.Solution;
+import com.medius.student.model.*;
 import com.medius.student.service.HibernateDatabase;
 import org.json.JSONArray;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.json.JSONObject;
 
@@ -18,26 +17,32 @@ public class RestController {
 
 	@GetMapping("players/{username}")
 	public Player getPlayerByUsername(@PathVariable("username") String username) {
-		return HibernateDatabase.getPlayer(username);
+			return HibernateDatabase.getPlayer(username);
 	}
 
 	@GetMapping("players")
 	public List<Player> getAllPlayers() {
-		return HibernateDatabase.getAllPlayers();
+			return HibernateDatabase.getAllPlayers();
 	}
 
 	@PostMapping("players")
-	public Player createPlayer(@RequestBody String Body) {
-			JSONObject json = new JSONObject(Body);
-			Player player = new Player(json.getString("username"), json.getInt("age"));
-			HibernateDatabase.addPlayer(player);
-			return player;
+	public ResponseEntity<Object> createPlayer(@RequestBody String Body) {
+		JSONObject json = new JSONObject(Body);
+		if(getPlayerByUsername(json.getString("username")) != null){
+			JSONObject response = new JSONObject();
+			response.put("status", "Error: username already taken");
+			return new ResponseEntity<Object>(response.toString(), HttpStatus.EXPECTATION_FAILED);
+		}
+		Player player = new Player(json.getString("username"), json.getInt("age"));
+		HibernateDatabase.addPlayer(player);
+		return new ResponseEntity<Object>(player, HttpStatus.OK);
 	}
 
 	@GetMapping("problems/{id}")
 	public Problem getProblemById(@PathVariable("id") long id) {
 		return HibernateDatabase.getProblem(id);
 	}
+
 	@GetMapping("problems/creator/{username}")
 	public List<Problem> getProblemsByUsername(@PathVariable("username") String username) {
 		Player player = HibernateDatabase.getPlayer(username);
@@ -50,7 +55,7 @@ public class RestController {
 	}
 
 	@PostMapping("problems")
-	public Problem createProblem(@RequestBody String Body) {
+	public ResponseEntity<Object> createProblem(@RequestBody String Body) {
 		JSONObject json = new JSONObject(Body);
 		JSONArray jsonproblem = json.getJSONArray("problem");
 
@@ -70,15 +75,21 @@ public class RestController {
 
 
 		Player player = HibernateDatabase.getPlayer(json.getString("username"));
+		if(player == null){
+			JSONObject response = new JSONObject();
+			response.put("status", "Error: user does not exists");
+			return new ResponseEntity<Object>(response.toString(), HttpStatus.NOT_FOUND);
+		}
 		Problem problem = new Problem(problemList);
 		List<Problem> problems = player.getProblems();
 		problems.add(problem);
 		player.setProblems(problems);
 		HibernateDatabase.createProblem(problem);
-		Solution solution = new Solution(problem, player, null);
-		HibernateDatabase.createSolution(solution);
-		Solver.solve(problem.getProblem());
-		return problem;
+
+		JSONObject response = new JSONObject();
+		if(Solver.solve(problem)) response.put("solvable", true);
+		else response.put("solvable", false);
+		return new ResponseEntity<Object>(response.toString(), HttpStatus.OK);
 	}
 
 	@GetMapping("solutions")
@@ -92,32 +103,29 @@ public class RestController {
 	}
 
 	@PostMapping("/solutions")
-	public Problem createSolution(@RequestBody String Body) {
+	public String createSolution(@RequestBody String Body) {
+		JSONObject response = new JSONObject();
 		JSONObject json = new JSONObject(Body);
-		JSONArray solutionSteps = json.getJSONArray("solutionSteps");
+		JSONArray steps = json.getJSONArray("solutionSteps");
 
-		List<List<Boolean>> problemList = new ArrayList<List<Boolean>>();
-		for(Object row : solutionSteps){
-			if ( row instanceof JSONArray ) {
-				List<Boolean> rowList = new ArrayList<Boolean>();
-				for (Object value : (JSONArray) row) {
-					if (value instanceof Boolean) {
-						rowList.add((Boolean) value);
-					}
-				}
-				problemList.add(rowList);
-			}
-			else return null;
+		List<SolutionStep> solutionSteps = new ArrayList<>();
+		for(int i = 0; i < steps.length(); i++){
+			JSONObject step = steps.getJSONObject(i);
+			SolutionStep solutionStep = new SolutionStep(step.getInt("toggleCoordinateX"),step.getInt("toggleCoordinateY"),i);
+			solutionSteps.add(solutionStep);
+		}
+		Problem problem = HibernateDatabase.getProblem(json.getInt("problemId"));
+		Player player = HibernateDatabase.getPlayer(json.getString("username"));
+		Solution solution = new Solution(problem, player, solutionSteps);
+
+		if(Solver.solutionValid(solution)){
+			HibernateDatabase.createSolution(solution);
+			response.put("validSolution", true);
+			return response.toString();
 		}
 
-
-		Player player = HibernateDatabase.getPlayer(json.getString("username"));
-		Problem problem = new Problem(problemList);
-		List<Problem> problems = player.getProblems();
-		problems.add(problem);
-		player.setProblems(problems);
-		HibernateDatabase.createProblem(problem);
-		return problem;
+		response.put("validSolution", false);
+		return response.toString();
 	}
 
 }

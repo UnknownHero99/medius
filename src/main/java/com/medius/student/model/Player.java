@@ -34,6 +34,9 @@ public class Player {
 		this.age = age;
 	}
 
+	public Player() {
+	}
+
 	public String getUsername() {
 		return username;
 	}

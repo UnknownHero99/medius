@@ -33,6 +33,10 @@ public class Solution {
         this.solutionSteps = solutionSteps;
     }
 
+    public Solution() {
+
+    }
+
     public Problem getProblem() {
         return problem;
     }
