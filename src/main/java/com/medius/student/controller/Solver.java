@@ -39,10 +39,8 @@ public class Solver {
 
     public static boolean solutionValid(Solution solution){
         List<List<Boolean>> matrix = new ArrayList<>(solution.getProblem().getProblem().stream().map(x -> new ArrayList<>(x)).collect(Collectors.toList()));
-        System.out.println(matrix);
         for (SolutionStep step: solution.getSolutionSteps()) {
             matrix = toggle(matrix,step.getToggleCoordinateX(), step.getToggleCoordinateY());
-            System.out.println(matrix);
         }
         if(matrixSolved(matrix)) return true;
         return false;
@@ -83,15 +81,11 @@ public class Solver {
     }
 
     public static boolean solve(Problem problem){
-        long start = System.currentTimeMillis();
-        long stop;
-        System.out.println("Started solving problem");
 
         List<List<Boolean>> matrix = problem.getProblemClone(problem.getProblem());
         matrix = chaseLights(matrix);
-        List<List<Boolean>> clone = problem.getProblemClone(matrix);
+        List<List<Boolean>> matrixClone = problem.getProblemClone(matrix);
         if(matrixSolved(matrix)) return true;
-        List<List<Boolean>> matrixbkp = new ArrayList<>(matrix.stream().map(x -> new ArrayList<>(x)).collect(Collectors.toList()));
 
         for(int i = 0; i<(int)Math.pow(2,matrix.get(0).size()); i++){
             List<Boolean> row = matrix.get(0);
@@ -99,17 +93,9 @@ public class Solver {
                 if(KthBit(i, c) == 1)toggle(matrix, c, 0);
             }
             matrix = chaseLights(matrix);
-            if(matrixSolved(matrix)){
-                stop = System.currentTimeMillis();
-                System.out.println("Stopped solving problem");
-                System.out.println("Time elapsed: " + (stop-start/1000));
-                return true;
-            }
-            matrix = problem.getProblemClone(clone);
+            if(matrixSolved(matrix)) return true;
+            matrix = problem.getProblemClone(matrixClone);
         }
-        stop = System.currentTimeMillis();
-        System.out.println("Stopped solving problem");
-        System.out.println("Time elapsed: " + (stop-start/1000));
         return false;
     }
 }

@@ -8,6 +8,7 @@ import com.medius.student.service.HibernateDatabase;
 import org.json.JSONArray;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.*;
 import org.json.JSONObject;
 
@@ -87,8 +88,17 @@ public class RestController {
 		HibernateDatabase.createProblem(problem);
 
 		JSONObject response = new JSONObject();
+
+		StopWatch watch = new StopWatch();
+		watch.start();
+		System.out.println("Started solving problem");
+
 		if(Solver.solve(problem)) response.put("solvable", true);
 		else response.put("solvable", false);
+
+		watch.stop();
+		System.out.println("Time Elapsed in seconds: " + watch.getTotalTimeSeconds());
+
 		return new ResponseEntity<Object>(response.toString(), HttpStatus.OK);
 	}
 
@@ -103,7 +113,7 @@ public class RestController {
 	}
 
 	@PostMapping("/solutions")
-	public String createSolution(@RequestBody String Body) {
+	public ResponseEntity<Object> createSolution(@RequestBody String Body) {
 		JSONObject response = new JSONObject();
 		JSONObject json = new JSONObject(Body);
 		JSONArray steps = json.getJSONArray("solutionSteps");
@@ -115,17 +125,21 @@ public class RestController {
 			solutionSteps.add(solutionStep);
 		}
 		Problem problem = HibernateDatabase.getProblem(json.getInt("problemId"));
+		if(problem == null){
+			response.put("status", "Error: problem does not exists");
+			return new ResponseEntity<Object>(response.toString(), HttpStatus.NOT_FOUND);
+		}
 		Player player = HibernateDatabase.getPlayer(json.getString("username"));
 		Solution solution = new Solution(problem, player, solutionSteps);
 
 		if(Solver.solutionValid(solution)){
 			HibernateDatabase.createSolution(solution);
 			response.put("validSolution", true);
-			return response.toString();
+			return new ResponseEntity<Object>(response.toString(), HttpStatus.OK);
 		}
 
 		response.put("validSolution", false);
-		return response.toString();
+		return new ResponseEntity<Object>(response.toString(), HttpStatus.EXPECTATION_FAILED);
 	}
 
 }
